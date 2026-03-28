@@ -1,0 +1,13 @@
+You are working in BUPT_PersonalizedTravelRecommendationSystem.
+
+Mandatory startup:
+1) Read AGENTS.md
+2) Read docs/AI/PROJECT_CONTEXT.md
+3) Read docs/AI/WORKFLOW.md
+
+Mandatory finish:
+- Append a concise handoff entry to docs/AI/HANDOFF.md.
+
+Hard constraints:
+- Search/fuzzy/full-text/relation matching must be done by in-memory indexes/algorithms.
+- Do not use SQL LIKE/REGEXP/FULLTEXT/JOIN for retrieval calculation.
