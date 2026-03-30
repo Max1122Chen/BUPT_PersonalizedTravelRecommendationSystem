@@ -1,6 +1,6 @@
 package com.travel.storage;
 
-import com.travel.mapper.BuildingMapper;
+import com.travel.mapper.PoiMapper;
 import com.travel.mapper.CommentMapper;
 import com.travel.mapper.DiaryDestinationMapper;
 import com.travel.mapper.DiaryMapper;
@@ -13,12 +13,12 @@ import com.travel.mapper.ScenicAreaTagMapper;
 import com.travel.mapper.TagMapper;
 import com.travel.mapper.UserInterestMapper;
 import com.travel.mapper.UserMapper;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Comment;
 import com.travel.model.entity.Diary;
 import com.travel.model.entity.DiaryDestination;
 import com.travel.model.entity.Facility;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.Restaurant;
 import com.travel.model.entity.ScenicArea;
@@ -63,7 +63,7 @@ public class InMemoryDataLoader
 
     private final TagMapper tagMapper;
 
-    private final BuildingMapper buildingMapper;
+    private final PoiMapper poiMapper;
 
     private final RoadMapper roadMapper;
 
@@ -93,7 +93,7 @@ public class InMemoryDataLoader
                                ScenicAreaMapper scenicAreaMapper,
                                ScenicAreaTagMapper scenicAreaTagMapper,
                                TagMapper tagMapper,
-                               BuildingMapper buildingMapper,
+                               PoiMapper poiMapper,
                                RoadMapper roadMapper,
                                FacilityMapper facilityMapper,
                                RestaurantMapper restaurantMapper,
@@ -109,7 +109,7 @@ public class InMemoryDataLoader
         this.scenicAreaMapper = scenicAreaMapper;
         this.scenicAreaTagMapper = scenicAreaTagMapper;
         this.tagMapper = tagMapper;
-        this.buildingMapper = buildingMapper;
+        this.poiMapper = poiMapper;
         this.roadMapper = roadMapper;
         this.facilityMapper = facilityMapper;
         this.restaurantMapper = restaurantMapper;
@@ -172,10 +172,10 @@ public class InMemoryDataLoader
         store.rebuildScenicAreaTagWeights();
 
         // 5) Buildings
-        List<Building> buildings = buildingMapper.selectList(null);
-        for (Building b : buildings)
+        List<Poi> pois = poiMapper.selectList(null);
+        for (Poi p : pois)
         {
-            store.insertBuilding(b);
+            store.insertPoi(p);
         }
 
         // 6) Roads

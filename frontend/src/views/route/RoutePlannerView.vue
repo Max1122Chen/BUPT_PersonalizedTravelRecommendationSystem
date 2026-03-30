@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { apiMapData, apiPlanRoute, apiPlanRouteMulti, apiScenicSearchByKeyword, type ScenicArea } from '../../lib/api'
 
@@ -14,7 +14,17 @@ type Edge = {
 }
 
 const loading = ref(false)
-const map = ref<{ nodes: number[]; edges: Edge[] } | null>(null)
+type RouteNodeDetail = {
+  nodeId: number
+  name: string
+  type?: string
+  location?: string
+  longitude?: number
+  latitude?: number
+  areaId?: number
+}
+
+const map = ref<{ nodes: number[]; nodeDetails?: RouteNodeDetail[]; edges: Edge[] } | null>(null)
 const chartEl = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
 
@@ -32,6 +42,85 @@ const result = ref<{ path: number[]; distance: number; time: number } | null>(nu
 const areaOpts = ref<ScenicArea[]>([])
 const areaLoading = ref(false)
 let areaSeq = 0
+
+const nodeOptions = computed(() => {
+  const details = map.value?.nodeDetails ?? []
+  if (details.length > 0) {
+    return details
+  }
+  return (map.value?.nodes ?? []).map((id) => ({ nodeId: id, name: `节点${id}` }))
+})
+
+const nodeLabelMap = computed(() => {
+  const out: Record<number, string> = {}
+  nodeOptions.value.forEach((node) => {
+    out[node.nodeId] = node.name || `节点${node.nodeId}`
+  })
+  return out
+})
+
+const nodeDetailMap = computed(() => {
+  const out: Record<number, RouteNodeDetail> = {}
+  ;(map.value?.nodeDetails ?? []).forEach((node) => {
+    out[node.nodeId] = node
+  })
+  return out
+})
+
+function poiTypeLabel(type?: string) {
+  if (!type) return '未分类'
+  const key = type.trim().toLowerCase()
+  switch (key) {
+    case 'scenic_spot':
+      return '景点'
+    case 'gate':
+      return '出入口'
+    case 'library':
+      return '图书馆'
+    case 'teaching':
+      return '教学楼'
+    case 'canteen':
+      return '食堂'
+    case 'service':
+      return '服务点'
+    case 'toilet':
+      return '厕所'
+    case 'dormitory':
+      return '宿舍'
+    case 'lab':
+      return '实验楼'
+    default:
+      return type
+  }
+}
+
+function buildNodePositionMap() {
+  const details = map.value?.nodeDetails ?? []
+  const positioned = details.filter(
+    (n) => typeof n.longitude === 'number' && Number.isFinite(n.longitude) && typeof n.latitude === 'number' && Number.isFinite(n.latitude),
+  )
+
+  const positions: Record<number, { x: number; y: number }> = {}
+  if (!positioned.length) return positions
+
+  const lngs = positioned.map((n) => Number(n.longitude))
+  const lats = positioned.map((n) => Number(n.latitude))
+  const minLng = Math.min(...lngs)
+  const maxLng = Math.max(...lngs)
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const lngSpan = Math.max(maxLng - minLng, 0.000001)
+  const latSpan = Math.max(maxLat - minLat, 0.000001)
+
+  // 将经纬度映射到稳定画布坐标：经度向右递增，纬度向上递增（屏幕 y 反向）。
+  positioned.forEach((node) => {
+    const x = ((Number(node.longitude) - minLng) / lngSpan) * 1000
+    const y = ((maxLat - Number(node.latitude)) / latSpan) * 700
+    positions[node.nodeId] = { x, y }
+  })
+
+  return positions
+}
 
 async function remoteArea(keyword: string) {
   const q = keyword.trim()
@@ -53,14 +142,37 @@ function renderGraph(highlightPath?: number[]) {
   if (!chartEl.value || !map.value) return
   if (!chart) chart = echarts.init(chartEl.value)
 
-  const nodes = map.value.nodes.map((id) => ({
-    id: String(id),
-    name: String(id),
-    symbolSize: highlightPath?.includes(id) ? 18 : 10,
-    itemStyle: highlightPath?.includes(id)
-      ? { color: 'rgba(204,120,92,0.95)' }
-      : { color: 'rgba(255,255,255,0.65)' },
-  }))
+  const labels = nodeLabelMap.value
+  const details = nodeDetailMap.value
+  const positionMap = buildNodePositionMap()
+  const fallbackRadius = 280
+  const fallbackCenterX = 500
+  const fallbackCenterY = 350
+  const total = Math.max(map.value.nodes.length, 1)
+
+  const nodes = map.value.nodes.map((id, idx) => {
+    const fallbackAngle = (idx / total) * Math.PI * 2
+    const fallback = {
+      x: fallbackCenterX + Math.cos(fallbackAngle) * fallbackRadius,
+      y: fallbackCenterY + Math.sin(fallbackAngle) * fallbackRadius,
+    }
+    const pos = positionMap[id] ?? fallback
+    return {
+      id: String(id),
+      name: labels[id] || String(id),
+      nodeId: id,
+      nodeType: details[id]?.type,
+      nodeLocation: details[id]?.location,
+      longitude: details[id]?.longitude,
+      latitude: details[id]?.latitude,
+      x: pos.x,
+      y: pos.y,
+      symbolSize: highlightPath?.includes(id) ? 18 : 10,
+      itemStyle: highlightPath?.includes(id)
+        ? { color: 'rgba(204,120,92,0.95)' }
+        : { color: 'rgba(255,255,255,0.65)' },
+    }
+  })
 
   const pathSet = new Set<string>()
   if (highlightPath && highlightPath.length > 1) {
@@ -84,15 +196,53 @@ function renderGraph(highlightPath?: number[]) {
   })
 
   chart.setOption({
-    tooltip: { trigger: 'item' },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(21, 19, 17, 0.92)',
+      borderColor: 'rgba(255, 255, 255, 0.16)',
+      textStyle: { color: '#f5eee6' },
+      formatter: (params: any) => {
+        if (params.dataType === 'node') {
+          const data = params.data || {}
+          const typeLabel = poiTypeLabel(data.nodeType)
+          const location = data.nodeLocation || '未知位置'
+          const lng = typeof data.longitude === 'number' ? data.longitude.toFixed(6) : '-'
+          const lat = typeof data.latitude === 'number' ? data.latitude.toFixed(6) : '-'
+          return [
+            `<div style="font-weight:700;margin-bottom:4px;">${data.name || '未命名节点'}</div>`,
+            `<div>节点ID：${data.nodeId ?? '-'}</div>`,
+            `<div>POI类型：${typeLabel}</div>`,
+            `<div>位置：${location}</div>`,
+            `<div>经纬度：${lng}, ${lat}</div>`,
+          ].join('')
+        }
+        if (params.dataType === 'edge') {
+          return `道路：${params.data?.source} → ${params.data?.target}<br/>距离：${Number(params.data?.value ?? 0).toFixed(1)} m`
+        }
+        return ''
+      },
+    },
     series: [
       {
         type: 'graph',
-        layout: 'force',
+        layout: 'none',
         roam: true,
-        draggable: true,
-        label: { show: true, color: 'rgba(255,255,255,0.8)' },
-        force: { repulsion: 90, edgeLength: [40, 120] },
+        draggable: false,
+        label: {
+          show: true,
+          position: 'right',
+          distance: 8,
+          color: 'rgba(58, 43, 28, 0.98)',
+          backgroundColor: 'rgba(255, 245, 232, 0.88)',
+          borderColor: 'rgba(183, 141, 103, 0.45)',
+          borderWidth: 1,
+          borderRadius: 4,
+          padding: [2, 4],
+          fontSize: 11,
+        },
+        labelLayout: {
+          hideOverlap: true,
+        },
         data: nodes,
         links,
       },
@@ -105,6 +255,9 @@ async function loadMap() {
   try {
     map.value = await apiMapData({ areaId: form.areaId })
     result.value = null
+    form.startId = null
+    form.endId = null
+    form.multiPoints = ''
     renderGraph()
   } finally {
     loading.value = false
@@ -113,7 +266,7 @@ async function loadMap() {
 
 async function plan() {
   if (!form.startId || !form.endId) {
-    ElMessage.warning('请填写 起点节点 ID 和 终点节点 ID（必填）')
+    ElMessage.warning('请先选择起点位置和终点位置')
     return
   }
   loading.value = true
@@ -137,7 +290,7 @@ async function planMulti() {
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isFinite(n))
   if (points.length < 2) {
-    ElMessage.warning('多点规划至少需要 2 个节点 ID（用逗号分隔）')
+    ElMessage.warning('多点规划至少需要 2 个位置（用逗号分隔节点ID）')
     return
   }
 
@@ -156,6 +309,13 @@ async function planMulti() {
 }
 
 onMounted(loadMap)
+
+watch(
+  () => form.areaId,
+  () => {
+    void loadMap()
+  },
+)
 </script>
 
 <template>
@@ -205,23 +365,37 @@ onMounted(loadMap)
           </el-form-item>
 
           <div class="row">
-            <el-form-item label="起点节点 ID（必填）">
-              <el-input-number
+            <el-form-item label="起点位置（必填）">
+              <el-select
                 v-model="form.startId"
-                :min="1"
-                :controls="false"
-                placeholder="起点节点ID"
+                filterable
+                clearable
+                placeholder="请选择起点POI"
                 style="width: 100%"
-              />
+              >
+                <el-option
+                  v-for="node in nodeOptions"
+                  :key="`start-${node.nodeId}`"
+                  :label="`${node.name}（ID ${node.nodeId}）`"
+                  :value="node.nodeId"
+                />
+              </el-select>
             </el-form-item>
-            <el-form-item label="终点节点 ID（必填）">
-              <el-input-number
+            <el-form-item label="终点位置（必填）">
+              <el-select
                 v-model="form.endId"
-                :min="1"
-                :controls="false"
-                placeholder="终点节点ID"
+                filterable
+                clearable
+                placeholder="请选择终点POI"
                 style="width: 100%"
-              />
+              >
+                <el-option
+                  v-for="node in nodeOptions"
+                  :key="`end-${node.nodeId}`"
+                  :label="`${node.name}（ID ${node.nodeId}）`"
+                  :value="node.nodeId"
+                />
+              </el-select>
             </el-form-item>
           </div>
 

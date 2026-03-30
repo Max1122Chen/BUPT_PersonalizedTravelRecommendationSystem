@@ -1,11 +1,11 @@
 package com.travel.storage;
 
 import com.travel.model.entity.Comment;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Diary;
 import com.travel.model.entity.DiaryDestination;
 import com.travel.model.entity.Facility;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.Restaurant;
 import com.travel.model.entity.ScenicArea;
@@ -71,11 +71,11 @@ public class InMemoryStore
 
     // ------------------- Buildings -------------------
 
-    private final Map<Long, Building> buildingsById = new HashMap<>();
+    private final Map<Long, Poi> poisById = new HashMap<>();
 
-    private final Map<Long, List<Long>> buildingIdsByAreaId = new HashMap<>();
+    private final Map<Long, List<Long>> poiIdsByAreaId = new HashMap<>();
 
-    private long nextBuildingId = 1;
+    private long nextPoiId = 1;
 
     // Tag
     private final Map<Long, Tag> tagsById = new HashMap<>();
@@ -300,21 +300,54 @@ public class InMemoryStore
         return scenicAreasById.get(id);
     }
 
-    public synchronized Building insertBuilding(Building building)
+    public synchronized Poi insertPoi(Poi poi)
     {
-        Long id = building.getId();
+        Long id = poi.getId();
         if (id == null)
         {
-            id = nextBuildingId++;
-            building.setId(id);
+            id = nextPoiId++;
+            poi.setId(id);
         }
-        buildingsById.put(id, building);
-        if (building.getAreaId() != null)
+        poisById.put(id, poi);
+        if (poi.getAreaId() != null)
         {
-            buildingIdsByAreaId.computeIfAbsent(building.getAreaId(), k -> new ArrayList<>()).add(id);
+            poiIdsByAreaId.computeIfAbsent(poi.getAreaId(), k -> new ArrayList<>()).add(id);
         }
-        nextBuildingId = Math.max(nextBuildingId, id + 1);
-        return building;
+        nextPoiId = Math.max(nextPoiId, id + 1);
+        return poi;
+    }
+
+    public Poi findPoiById(Long id)
+    {
+        return poisById.get(id);
+    }
+
+    public List<Poi> findPoisByAreaId(Long areaId)
+    {
+        if (areaId == null)
+        {
+            return new ArrayList<>(poisById.values());
+        }
+        List<Long> ids = poiIdsByAreaId.get(areaId);
+        if (ids == null)
+        {
+            return List.of();
+        }
+        List<Poi> result = new ArrayList<>(ids.size());
+        for (Long id : ids)
+        {
+            Poi poi = poisById.get(id);
+            if (poi != null)
+            {
+                result.add(poi);
+            }
+        }
+        return result;
+    }
+
+    public synchronized Poi insertBuilding(Poi poi)
+    {
+        return insertPoi(poi);
     }
 
     public List<ScenicArea> findScenicAreasByType(String type)

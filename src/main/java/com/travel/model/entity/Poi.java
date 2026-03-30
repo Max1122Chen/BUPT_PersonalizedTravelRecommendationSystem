@@ -10,10 +10,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 建筑物实体，对应 buildings 表。
+ * POI 实体，对应 buildings 表。
  */
 @TableName("buildings")
-public class Building implements Serializable
+public class Poi implements Serializable
 {
 
     @Serial

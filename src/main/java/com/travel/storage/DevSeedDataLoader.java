@@ -2,12 +2,12 @@ package com.travel.storage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Comment;
 import com.travel.model.entity.Diary;
 import com.travel.model.entity.DiaryDestination;
 import com.travel.model.entity.Facility;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Restaurant;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
@@ -112,9 +112,9 @@ public class DevSeedDataLoader
         }
         store.rebuildScenicAreaTagWeights();
 
-        for (Building b : bundle.buildings)
+        for (Poi p : bundle.pois)
         {
-            store.insertBuilding(b);
+            store.insertPoi(p);
         }
         for (Road r : bundle.roads)
         {
@@ -185,7 +185,7 @@ public class DevSeedDataLoader
             List<ScenicAreaTag> scenicAreaTags = readList("scenic_area_tags.json", new TypeReference<List<ScenicAreaTag>>()
             {
             });
-            List<Building> buildings = readList("buildings.json", new TypeReference<List<Building>>()
+            List<Poi> pois = readList("buildings.json", new TypeReference<List<Poi>>()
             {
             });
             List<Road> roads = readList("roads.json", new TypeReference<List<Road>>()
@@ -216,7 +216,7 @@ public class DevSeedDataLoader
                 scenicAreas,
                 tags,
                 scenicAreaTags,
-                buildings,
+                pois,
                 roads,
                 facilities,
                 restaurants,
@@ -279,7 +279,7 @@ public class DevSeedDataLoader
         List<ScenicArea> scenicAreas,
         List<Tag> tags,
         List<ScenicAreaTag> scenicAreaTags,
-        List<Building> buildings,
+        List<Poi> pois,
         List<Road> roads,
         List<Facility> facilities,
         List<Restaurant> restaurants,

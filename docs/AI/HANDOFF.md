@@ -3,6 +3,46 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-03-30（会话目标：Building 语义升级为 POI）
+### 会话目标
+- 将领域术语从 Building 统一升级为 POI，并保持现有数据结构与运行行为不变。
+- 新增并贯通 POI 类型 `scenic_spot`，同步后端、前端与文档描述。
+
+### 已完成
+- 后端模型与数据层完成 POI 命名落地：`Poi` 实体、`PoiMapper`、`InMemoryStore` 的 `insertPoi/findPoiById/findPoisByAreaId`。
+- 管理端新增 `POST /api/admin/poi`，并保留 `POST /api/admin/building` 兼容入口。
+- 路线地图数据继续返回 `nodeDetails`，节点详情改为基于 POI 查询。
+- 前端管理页改为 POI 录入流程，调用 `apiAdminAddPoi`；路线页文案改为 POI，并新增 `scenic_spot` 类型显示。
+- `dev-seed/buildings.json` 增加 `scenic_spot` 类型样例（`id=506`）。
+- 需求文档与技术设计文档（根目录与 docs 双份）已同步 POI 术语及接口说明。
+
+### 验证
+- 后端：`mvn -DskipTests compile` 通过。
+- 前端：`npm.cmd run build` 通过。
+
+### 变更文件
+- src/main/java/com/travel/model/entity/Poi.java
+- src/main/java/com/travel/mapper/PoiMapper.java
+- src/main/java/com/travel/controller/AdminController.java
+- src/main/java/com/travel/service/AdminService.java
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- src/main/java/com/travel/storage/InMemoryStore.java
+- src/main/java/com/travel/storage/InMemoryDataLoader.java
+- src/main/java/com/travel/storage/DevSeedDataLoader.java
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- frontend/src/lib/api.ts
+- frontend/src/views/admin/AdminView.vue
+- frontend/src/views/route/RoutePlannerView.vue
+- src/main/resources/dev-seed/buildings.json
+- Requirements Documendation.md
+- docs/Requirements/Requirements Documendation.md
+- Technical Design Document.md
+- docs/Tech/Technical Design Document.md
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
 ## 2026-03-29（主内容收窄 / 顶栏四角圆角 / Home 双滚动条）
 ### 已完成
 - 非 Home 路由：`.es-main-inner` 设为 `max-width: min(1040px, 86vw)` 居中，`.es-main` 使用 `clamp` 左右留白，两侧露出背景；Home 仍走 `es-main--flush`，全宽英雄区不变。
@@ -695,6 +735,58 @@
 
 ### 变更文件
 - src/main/java/com/travel/security/SecurityConfig.java
+- docs/AI/HANDOFF.md
+
+## 2026-03-30（路线规划交互优化：节点ID -> 起止位置）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 后端 `GET /api/route/map-data` 增强：在 `nodes/edges` 之外新增 `nodeDetails`，返回节点对应建筑信息（`nodeId/name/type/location/经纬度/areaId`）。
+- 前端路线页改造：起点/终点从“手输节点 ID”改为“起止位置下拉选择（建筑）”，并将图节点标签显示为建筑名称。
+- 切换景区时会自动刷新地图并重置起止位置，避免跨景区节点错选。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`。
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- src/main/java/com/travel/storage/InMemoryStore.java
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-30（路线图真实坐标化：禁拖拽 + 经纬度布局）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 前端路线图从 `force` 布局切换为 `none` 固定布局，节点不再允许手动拖拽（`draggable=false`）。
+- 使用后端 `nodeDetails` 中建筑经纬度进行坐标映射显示，节点相对位置贴近真实地理关系。
+- 对缺失经纬度节点提供兜底圆环布局，确保图始终可渲染。
+
+### 验证结果
+- 前端类型检查与构建通过：`npm.cmd run build`。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-30（路线图可读性优化：标签避让 + 对比增强 + 丰富节点提示）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 节点标签避免与图标重叠：标签位置改为 `right`，设置 `distance` 与 `hideOverlap`，减少文本遮挡。
+- 标签可读性增强：文本改为深色，并增加浅色背景、边框与内边距，避免与背景颜色接近。
+- 悬浮信息增强：节点 tooltip 新增建筑名称、节点ID、建筑类型（中文映射）、位置、经纬度；道路 tooltip 显示起终点与距离。
+
+### 验证结果
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
 - docs/AI/HANDOFF.md
 
 ## 2026-03-28（推荐景点改造：从列表输出到真实个性化推荐）

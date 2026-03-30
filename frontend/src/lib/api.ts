@@ -186,6 +186,15 @@ export async function apiScenicSearchByKeyword(params: { keyword: string; limit?
 export async function apiMapData(params: { areaId?: number }) {
   const res = (await http.get('/api/route/map-data', { params })) as ApiResponse<{
     nodes: number[]
+    nodeDetails?: {
+      nodeId: number
+      name: string
+      type?: string
+      location?: string
+      longitude?: number
+      latitude?: number
+      areaId?: number
+    }[]
     edges: {
       startId: number
       endId: number
@@ -371,7 +380,13 @@ export async function apiAdminListScenicAreas(params: { page?: number; size?: nu
   return res.data
 }
 
+export async function apiAdminAddPoi(payload: any) {
+  const res = (await http.post('/api/admin/poi', payload)) as ApiResponse<any>
+  return res.data
+}
+
 export async function apiAdminAddBuilding(payload: any) {
+  // Backward-compatible wrapper for existing callers.
   const res = (await http.post('/api/admin/building', payload)) as ApiResponse<any>
   return res.data
 }

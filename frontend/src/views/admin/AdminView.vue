@@ -2,8 +2,8 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
-  apiAdminAddBuilding,
   apiAdminAddFood,
+  apiAdminAddPoi,
   apiAdminAddRoad,
   apiAdminAddScenicArea,
   apiAdminListScenicAreas,
@@ -26,7 +26,7 @@ const scenicForm = reactive<Partial<ScenicArea>>({
   ticketPrice: '',
 })
 
-const buildingForm = reactive<any>({ name: '', type: '', description: '', location: '', longitude: null, latitude: null, areaId: null })
+const poiForm = reactive<any>({ name: '', type: '', description: '', location: '', longitude: null, latitude: null, areaId: null })
 const roadForm = reactive<any>({
   startId: null,
   endId: null,
@@ -66,13 +66,13 @@ async function addScenic() {
   await loadScenic()
 }
 
-async function addBuilding() {
-  if (!buildingForm.name || !buildingForm.type || !buildingForm.location || !buildingForm.areaId) {
-    ElMessage.warning('请补全新增建筑所需字段：name、type、location、areaId')
+async function addPoi() {
+  if (!poiForm.name || !poiForm.type || !poiForm.location || !poiForm.areaId) {
+    ElMessage.warning('请补全新增 POI 所需字段：name、type、location、areaId')
     return
   }
-  await apiAdminAddBuilding(buildingForm)
-  ElMessage.success('添加建筑成功')
+  await apiAdminAddPoi(poiForm)
+  ElMessage.success('添加 POI 成功')
 }
 
 async function addRoad() {
@@ -180,30 +180,30 @@ onMounted(loadScenic)
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="建筑 / 道路 / 美食">
+        <el-tab-pane label="POI / 道路 / 美食">
           <div class="grid3">
             <div class="glass block">
-              <div style="font-weight: 900; margin-bottom: 10px">新增建筑</div>
+              <div style="font-weight: 900; margin-bottom: 10px">新增 POI</div>
               <el-form label-position="top">
                 <el-form-item label="name">
-                  <el-input v-model="buildingForm.name" placeholder="建筑名称（buildings.name）" />
+                  <el-input v-model="poiForm.name" placeholder="POI 名称（buildings.name）" />
                 </el-form-item>
                 <el-form-item label="type">
-                  <el-input v-model="buildingForm.type" placeholder="建筑类型（buildings.type）" />
+                  <el-input v-model="poiForm.type" placeholder="POI 类型（如 scenic_spot / teaching）" />
                 </el-form-item>
                 <el-form-item label="location">
-                  <el-input v-model="buildingForm.location" placeholder="建筑位置（buildings.location）" />
+                  <el-input v-model="poiForm.location" placeholder="POI 位置（buildings.location）" />
                 </el-form-item>
                 <el-form-item label="areaId">
                   <el-input-number
-                    v-model="buildingForm.areaId"
+                    v-model="poiForm.areaId"
                     :min="1"
                     :controls="false"
                     placeholder="所属景区/校园 ID（area_id）"
                     style="width: 100%"
                   />
                 </el-form-item>
-                <el-button type="primary" @click="addBuilding">提交</el-button>
+                <el-button type="primary" @click="addPoi">提交</el-button>
               </el-form>
             </div>
 

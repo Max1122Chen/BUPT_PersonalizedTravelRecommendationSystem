@@ -1,14 +1,14 @@
 package com.travel.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.travel.model.entity.Building;
+import com.travel.model.entity.Poi;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 建筑物表 Mapper。
+ * POI 表 Mapper。
  */
 @Mapper
-public interface BuildingMapper extends BaseMapper<Building>
+public interface PoiMapper extends BaseMapper<Poi>
 {
 }
 

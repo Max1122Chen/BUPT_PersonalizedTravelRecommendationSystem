@@ -9,6 +9,7 @@ import com.travel.algorithm.graph.PathResult;
 import com.travel.storage.InMemoryStore;
 import com.travel.model.dto.route.MultiPointRouteRequest;
 import com.travel.model.dto.route.RoutePlanRequest;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.vo.route.RoutePlanVO;
 import com.travel.service.RouteService;
@@ -143,6 +144,35 @@ public class RouteServiceImpl implements RouteService
     {
         Graph graph = loadGraph(areaId);
         List<Map<String, Object>> edges = new ArrayList<>();
+        List<Map<String, Object>> nodeDetails = new ArrayList<>();
+
+        for (Long nodeId : graph.getNodes())
+        {
+            Map<String, Object> node = new HashMap<>();
+            node.put("nodeId", nodeId);
+            Poi poi = store.findPoiById(nodeId);
+            if (poi != null)
+            {
+                node.put("name", poi.getName());
+                node.put("type", poi.getType());
+                node.put("location", poi.getLocation());
+                node.put("longitude", poi.getLongitude());
+                node.put("latitude", poi.getLatitude());
+                node.put("areaId", poi.getAreaId());
+            }
+            else
+            {
+                node.put("name", "节点" + nodeId);
+            }
+            nodeDetails.add(node);
+        }
+
+        nodeDetails.sort((a, b) ->
+        {
+            String na = String.valueOf(a.get("name"));
+            String nb = String.valueOf(b.get("name"));
+            return na.compareToIgnoreCase(nb);
+        });
 
         for (Long start : graph.getNodes())
         {
@@ -161,6 +191,7 @@ public class RouteServiceImpl implements RouteService
 
         Map<String, Object> result = new HashMap<>();
         result.put("nodes", new ArrayList<>(graph.getNodes()));
+        result.put("nodeDetails", nodeDetails);
         result.put("edges", edges);
         return result;
     }

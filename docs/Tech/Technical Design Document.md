@@ -184,17 +184,17 @@ sequenceDiagram
 | create_time  | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间                     |
 | update_time  | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间                     |
 
-#### 3.1.5 建筑物表（buildings）
+#### 3.1.5 POI表（buildings）
 | 字段名      | 数据类型 | 长度 | 约束                                                         | 描述                         |
 | ----------- | -------- | ---- | ------------------------------------------------------------ | ---------------------------- |
-| id          | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT                                  | 建筑物ID                     |
-| name        | VARCHAR  | 100  | NOT NULL                                                     | 建筑物名称                   |
-| type        | VARCHAR  | 50   | NOT NULL                                                     | 建筑物类型（景点、教学楼等） |
-| description | TEXT     |      |                                                              | 建筑物描述                   |
+| id          | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT                                  | POI ID                       |
+| name        | VARCHAR  | 100  | NOT NULL                                                     | POI 名称                     |
+| type        | VARCHAR  | 50   | NOT NULL                                                     | POI类型（如 scenic_spot、教学楼等） |
+| description | TEXT     |      |                                                              | POI 描述                     |
 | location    | VARCHAR  | 255  | NOT NULL                                                     | 位置信息                     |
 | longitude   | DOUBLE   |      | NOT NULL                                                     | 经度                         |
 | latitude    | DOUBLE   |      | NOT NULL                                                     | 纬度                         |
-| parent_id   | BIGINT   | 20   |                                                              | 父建筑物ID（用于室内导航）   |
+| parent_id   | BIGINT   | 20   |                                                              | 父POI ID（用于室内导航）     |
 | area_id     | BIGINT   | 20   | NOT NULL                                                     | 所属景区ID                   |
 | create_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间                     |
 | update_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间                     |
@@ -217,8 +217,8 @@ sequenceDiagram
 | 字段名       | 数据类型 | 长度 | 约束                                                         | 描述                   |
 | ------------ | -------- | ---- | ------------------------------------------------------------ | ---------------------- |
 | id           | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT                                  | 道路ID                 |
-| start_id     | BIGINT   | 20   | NOT NULL                                                     | 起点ID（建筑物或设施） |
-| end_id       | BIGINT   | 20   | NOT NULL                                                     | 终点ID（建筑物或设施） |
+| start_id     | BIGINT   | 20   | NOT NULL                                                     | 起点ID（POI或设施） |
+| end_id       | BIGINT   | 20   | NOT NULL                                                     | 终点ID（POI或设施） |
 | distance     | DOUBLE   |      | NOT NULL                                                     | 距离（米）             |
 | speed        | DOUBLE   |      | NOT NULL, DEFAULT 5.0                                        | 理想速度（米/秒）      |
 | congestion   | DOUBLE   |      | NOT NULL, DEFAULT 1.0                                        | 拥挤度（0-1）          |
@@ -316,7 +316,7 @@ sequenceDiagram
 | scenic_areas | idx_rating    | INDEX    | rating                 | 加速评分排序                 |
 | scenic_areas | idx_heat      | INDEX    | heat                   | 加速热度排序                 |
 | scenic_areas | idx_type      | INDEX    | type                   | 加速按类型查询景区（如校园） |
-| buildings    | idx_area_id   | INDEX    | area_id                | 加速按景区查询建筑物         |
+| buildings    | idx_area_id   | INDEX    | area_id                | 加速按景区查询POI            |
 | facilities   | idx_area_id   | INDEX    | area_id                | 加速按景区查询设施           |
 | roads        | idx_start_end | INDEX    | start_id, end_id       | 加速道路查询                 |
 | foods        | idx_name      | INDEX    | name                   | 加速美食名称查询             |
@@ -403,9 +403,9 @@ sequenceDiagram
 - **API**：/api/diary、/api/diary/:id、/api/diary/search、/api/diary/rate、/api/animation/generate
 
 #### 4.2.7 数据管理服务
-- **功能**：景区、校园、建筑物、道路、美食等数据管理
+- **功能**：景区、校园、POI、道路、美食等数据管理
 - **类**：AdminController、AdminService
-- **API**：/api/admin/scenic-area、/api/admin/building、/api/admin/road、/api/admin/food
+- **API**：/api/admin/scenic-area、/api/admin/poi（兼容 /api/admin/building）、/api/admin/road、/api/admin/food
 
 #### 4.2.8 系统服务
 - **功能**：系统通知、数据备份与恢复
@@ -476,7 +476,7 @@ sequenceDiagram
 | ---------------------- | ---- | ------------ | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | /api/admin/scenic-area | POST | 数据管理服务 | 添加景区     | name, description, location, longitude, latitude, type       | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 | /api/admin/scenic-area | GET  | 数据管理服务 | 获取景区列表 | page, size, type                                             | `{"code": 200, "data": {"list": [...]}, "message": "获取成功"}` |
-| /api/admin/building    | POST | 数据管理服务 | 添加建筑物   | name, type, description, location, longitude, latitude, areaId | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
+| /api/admin/poi（兼容 /api/admin/building） | POST | 数据管理服务 | 添加POI | name, type, description, location, longitude, latitude, areaId | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}` |
 | /api/admin/road        | POST | 数据管理服务 | 添加道路     | startId, endId, distance, speed, congestion, areaId          | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 | /api/admin/food        | POST | 数据管理服务 | 添加美食     | name, cuisine, description, price, restaurantId, areaId      | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 
@@ -1078,7 +1078,7 @@ backend/
 │   │   │           ├── mapper/         # 数据访问层
 │   │   │           │   ├── UserMapper.java
 │   │   │           │   ├── ScenicAreaMapper.java
-│   │   │           │   ├── BuildingMapper.java
+│   │   │           │   ├── PoiMapper.java
 │   │   │           │   ├── RoadMapper.java
 │   │   │           │   ├── FacilityMapper.java
 │   │   │           │   ├── FoodMapper.java
@@ -1086,7 +1086,7 @@ backend/
 │   │   │           ├── model/          # 实体类
 │   │   │           │   ├── User.java
 │   │   │           │   ├── ScenicArea.java
-│   │   │           │   ├── Building.java
+│   │   │           │   ├── Poi.java
 │   │   │           │   ├── Road.java
 │   │   │           │   ├── Facility.java
 │   │   │           │   ├── Food.java

@@ -2,8 +2,8 @@ package com.travel.controller;
 
 import com.travel.common.ApiResponse;
 import com.travel.common.PageData;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
 import com.travel.security.AuthUser;
@@ -58,14 +58,20 @@ public class AdminController
         return ApiResponse.success(adminService.listScenicAreas(page, size, type), "获取成功");
     }
 
-    @PostMapping("/building")
-    public ApiResponse<Building> addBuilding(@Valid @RequestBody Building building)
+    @PostMapping("/poi")
+    public ApiResponse<Poi> addPoi(@Valid @RequestBody Poi poi)
     {
         if (!isAdmin())
         {
             return ApiResponse.failure(403, "无权限");
         }
-        return ApiResponse.success(adminService.addBuilding(building), "添加成功");
+        return ApiResponse.success(adminService.addPoi(poi), "添加成功");
+    }
+
+    @PostMapping("/building")
+    public ApiResponse<Poi> addBuilding(@Valid @RequestBody Poi poi)
+    {
+        return addPoi(poi);
     }
 
     @PostMapping("/road")

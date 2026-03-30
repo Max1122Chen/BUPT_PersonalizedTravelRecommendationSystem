@@ -1,8 +1,8 @@
 package com.travel.service;
 
 import com.travel.common.PageData;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
 
@@ -16,7 +16,7 @@ public interface AdminService
 
     PageData<ScenicArea> listScenicAreas(Integer page, Integer size, String type);
 
-    Building addBuilding(Building building);
+    Poi addPoi(Poi poi);
 
     Road addRoad(Road road);
 

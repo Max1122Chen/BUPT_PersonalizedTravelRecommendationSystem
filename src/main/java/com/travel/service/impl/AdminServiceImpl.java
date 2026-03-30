@@ -2,8 +2,8 @@ package com.travel.service.impl;
 
 import com.travel.common.PageData;
 import com.travel.storage.InMemoryStore;
-import com.travel.model.entity.Building;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
 import com.travel.service.AdminService;
@@ -75,13 +75,13 @@ public class AdminServiceImpl implements AdminService
     }
 
     @Override
-    public Building addBuilding(Building building)
+    public Poi addPoi(Poi poi)
     {
         LocalDateTime now = LocalDateTime.now();
-        building.setCreateTime(now);
-        building.setUpdateTime(now);
-        store.insertBuilding(building);
-        return building;
+        poi.setCreateTime(now);
+        poi.setUpdateTime(now);
+        store.insertPoi(poi);
+        return poi;
     }
 
     @Override
