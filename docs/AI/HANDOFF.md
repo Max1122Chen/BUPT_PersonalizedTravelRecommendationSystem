@@ -3,6 +3,38 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-03-31（CVE 依赖升级与复核）
+### 会话目标
+- 升级存在漏洞的依赖到无已知漏洞版本，并使用 `#appmod-validate-cves-for-java` 完成修复验证。
+
+### 已完成
+- 将 `spring-boot-starter-parent` 从 `3.2.3` 升级到 `3.5.0`。
+- 在 `pom.xml` 增加安全版本覆盖：`spring-framework.version=6.2.17`、`spring-security.version=6.5.9`、`tomcat.version=10.1.52`、`netty.version=4.1.125.Final`。
+- 显式加入 `net.minidev:json-smart:2.5.2` 与 `org.assertj:assertj-core:3.27.7`（test）以覆盖传递依赖漏洞。
+- 执行全量编译与测试通过（`mvn -q clean test`）。
+- 对“升级前命中漏洞的关键构件集合”执行复扫，结果为 0 个需修复 CVE。
+
+### 验证
+- 构建验证：`mvn -q clean test-compile` 通过。
+- 测试验证：`mvn -q clean test` 通过。
+- 漏洞验证：`#appmod-validate-cves-for-java` 对以下构件复扫为无已知需修复漏洞：
+  - `io.netty:netty-handler:4.1.125.Final`
+  - `net.minidev:json-smart:2.5.2`
+  - `org.apache.tomcat.embed:tomcat-embed-core:10.1.52`
+  - `org.assertj:assertj-core:3.27.7`
+  - `org.springframework.security:spring-security-core/web/crypto:6.5.9`
+  - `org.springframework:spring-web/spring-webmvc:6.2.17`
+
+### 变更文件
+- pom.xml
+- docs/AI/HANDOFF.md
+- .github/java-upgrade/20260331001104/plan.md
+- .github/java-upgrade/20260331001104/progress.md
+- .github/java-upgrade/20260331001104/summary.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
 ## 2026-03-30（会话目标：Building 语义升级为 POI）
 ### 会话目标
 - 将领域术语从 Building 统一升级为 POI，并保持现有数据结构与运行行为不变。
